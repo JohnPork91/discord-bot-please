@@ -15,6 +15,7 @@ let client = null;
 let connected = false;
 let currentChannelId = DEFAULT_CHANNEL_ID;
 let messages = [];
+let lastMessageCount = 0;
 
 app.get('/', (req, res) => {
   res.send(`
@@ -143,6 +144,16 @@ app.get('/', (req, res) => {
       font-size: 11px;
       color: #949ba4;
       margin-top: 4px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .msg .meta .message-id {
+      color: #747f8d;
+    }
+
+    .msg .meta .time {
+      color: #949ba4;
     }
 
     .message-input {
@@ -261,20 +272,29 @@ app.get('/', (req, res) => {
       const data = await res.json();
       const chat = document.getElementById('chat');
       
-      // Only scroll if user hasn't scrolled up (preserve scroll position)
-      const wasAtBottom = chat.scrollHeight - chat.scrollTop <= chat.clientHeight + 50;
-      
-      chat.innerHTML = data.messages.map(m => \`
-        <div class="msg">
-          <div class="name">\${escapeHtml(m.author)}</div>
-          <div class="message-content">\${escapeHtml(m.content)}</div>
-          <div class="meta">\${escapeHtml(m.time)}</div>
-        </div>
-      \`).join('');
-      
-      // Only scroll to bottom if user was already at bottom
-      if (wasAtBottom) {
-        chat.scrollTop = chat.scrollHeight;
+      // Only render if chat is empty (first load)
+      if (chat.innerHTML === '' || data.messages.length !== lastMessageCount) {
+        // Save scroll position
+        const scrollTop = chat.scrollTop;
+        const scrollHeight = chat.scrollHeight;
+        
+        // Only render if messages changed
+        if (data.messages.length !== lastMessageCount) {
+          chat.innerHTML = data.messages.map((m, index) => \`
+            <div class="msg" data-id="\${m.id || index}">
+              <div class="name">\${escapeHtml(m.author)}</div>
+              <div class="message-content">\${escapeHtml(m.content)}</div>
+              <div class="meta">
+                <span class="message-id">ID: \${m.id || index}</span>
+                <span class="time">\${escapeHtml(m.time)}</span>
+              </div>
+            </div>
+          \`).join('');
+          lastMessageCount = data.messages.length;
+        }
+        
+        // Restore scroll position (don't auto-scroll)
+        chat.scrollTop = scrollTop;
       }
     }
 
@@ -304,6 +324,7 @@ app.post('/start', async (req, res) => {
 
     currentChannelId = finalChannelId;
     messages = [];
+    lastMessageCount = 0;
 
     if (client) {
       try { await client.destroy(); } catch {}
@@ -330,6 +351,7 @@ app.post('/start', async (req, res) => {
     client.on('messageCreate', (msg) => {
       if (msg.channel.id !== currentChannelId) return;
       messages.push({
+        id: msg.id,
         author: msg.author.bot ? `[Bot] ${msg.author.username}` : msg.author.username,
         content: msg.content || '[no text]',
         time: new Date(msg.createdTimestamp).toLocaleString()
@@ -356,6 +378,7 @@ app.post('/start', async (req, res) => {
 
     for (const msg of fetchedArray) {
       messages.push({
+        id: msg.id,
         author: msg.author.bot ? `[Bot] ${msg.author.username}` : msg.author.username,
         content: msg.content || '[no text]',
         time: new Date(msg.createdTimestamp).toLocaleString()
@@ -379,6 +402,7 @@ app.post('/stop', async (req, res) => {
     client = null;
     connected = false;
     messages = [];
+    lastMessageCount = 0;
     res.json({ ok: true });
   } catch (err) {
     res.json({ ok: false, error: err.message });
