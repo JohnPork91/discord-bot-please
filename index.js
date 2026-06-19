@@ -260,6 +260,10 @@ app.get('/', (req, res) => {
       const res = await fetch('/messages');
       const data = await res.json();
       const chat = document.getElementById('chat');
+      
+      // Only scroll if user hasn't scrolled up (preserve scroll position)
+      const wasAtBottom = chat.scrollHeight - chat.scrollTop <= chat.clientHeight + 50;
+      
       chat.innerHTML = data.messages.map(m => \`
         <div class="msg">
           <div class="name">\${escapeHtml(m.author)}</div>
@@ -267,7 +271,11 @@ app.get('/', (req, res) => {
           <div class="meta">\${escapeHtml(m.time)}</div>
         </div>
       \`).join('');
-      chat.scrollTop = chat.scrollHeight;
+      
+      // Only scroll to bottom if user was already at bottom
+      if (wasAtBottom) {
+        chat.scrollTop = chat.scrollHeight;
+      }
     }
 
     function escapeHtml(text) {
