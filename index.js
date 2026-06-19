@@ -16,7 +16,7 @@ let client = null;
 let connected = false;
 let currentChannelId = DEFAULT_CHANNEL_ID;
 let messages = [];
-let channelMembers = []; // { id, username, status, activity }
+let channelMembers = []; // { id, username }
 
 app.get('/', (req, res) => {
   res.send(`
@@ -37,113 +37,24 @@ app.get('/', (req, res) => {
       margin: 0;
       padding: 0;
       min-height: 100vh;
-      display: flex;
     }
-    .main-container {
-      display: flex;
-      width: 100%;
-      max-width: 1400px;
+    .container {
+      max-width: 900px;
       margin: 0 auto;
+      padding: 20px;
     }
-
-    /* Sidebar */
-    .sidebar {
-      width: 280px;
-      background: #2b2d31;
-      display: flex;
-      flex-direction: column;
-      border-right: 1px solid #1e1f22;
-    }
-
-    .sidebar-header {
-      padding: 16px;
+    h2 {
+      margin: 0 0 20px;
+      font-size: 24px;
       font-weight: 600;
-      font-size: 16px;
       color: #f2f3f5;
-      border-bottom: 1px solid #1e1f22;
-    }
-
-    .sidebar-section {
-      padding: 12px 16px 4px;
-      font-size: 12px;
-      font-weight: 600;
-      color: #949ba4;
-      text-transform: uppercase;
-    }
-
-    .member-list {
-      overflow-y: auto;
-      padding: 4px 0;
-    }
-
-    .member-item {
-      display: flex;
-      align-items: center;
-      padding: 6px 16px;
-      cursor: pointer;
-    }
-    .member-item:hover {
-      background: #35373c;
-    }
-
-    .avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: #5865f2;
-      margin-right: 10px;
-      position: relative;
-    }
-
-    .avatar img {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-    }
-
-    .status-indicator {
-      position: absolute;
-      bottom: -2px;
-      right: -2px;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      border: 3px solid #2b2d31;
-    }
-
-    .status-online {
-      background: #3ba55c;
-    }
-    .status-idle {
-      background: #faa61a;
-    }
-    .status-dnd {
-      background: #f23f43;
-    }
-    .status-offline {
-      background: #747f8d;
-    }
-
-    .member-name {
-      font-size: 14px;
-      color: #dbdee1;
-    }
-    .member-name.bot {
-      color: #7289da;
-    }
-
-    /* Chat area */
-    .chat-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
     }
 
     .input-group {
       background: #2b2d31;
       padding: 16px;
       border-radius: 8px;
-      margin: 20px;
+      margin-bottom: 20px;
     }
 
     label {
@@ -198,10 +109,6 @@ app.get('/', (req, res) => {
       background: #2b2d31;
       border-radius: 8px;
       overflow: hidden;
-      margin: 0 20px 20px;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
     }
 
     .chat-header {
@@ -305,37 +212,30 @@ app.get('/', (req, res) => {
   </style>
 </head>
 <body>
-  <div class="main-container">
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <div class="sidebar-header">Members</div>
-      <div id="memberList"></div>
-    </div>
+  <div class="container">
+    <h2>Discord Chat Bot</h2>
 
-    <!-- Chat area -->
-    <div class="chat-area">
-      <div class="input-group">
-        <label>Channel ID</label>
-        <input id="channelId" type="text" value="1393951841238388816" placeholder="Channel ID" />
+    <div class="input-group">
+      <label>Channel ID</label>
+      <input id="channelId" type="text" value="1393951841238388816" placeholder="Channel ID" />
 
-        <div class="row">
-          <button onclick="connectBot()">Connect Bot</button>
-          <button onclick="disconnectBot()" id="disconnectBtn" style="display:none; background: #4e5058;">Disconnect Bot</button>
-        </div>
-
-        <div class="status" id="status"></div>
+      <div class="row">
+        <button onclick="connectBot()">Connect Bot</button>
+        <button onclick="disconnectBot()" id="disconnectBtn" style="display:none; background: #4e5058;">Disconnect Bot</button>
       </div>
 
-      <div class="chat-container">
-        <div class="chat-header">Channel Messages</div>
-        <div id="chat"></div>
-        <div class="message-input">
-          <div class="message-input-wrapper">
-            <input id="message" type="text" placeholder="Type a message... (use @ to ping)" oninput="handleInput()" onkeydown="handleKeyDown(event)" />
-            <div id="suggestions" class="suggestions" style="display:none;"></div>
-          </div>
-          <button onclick="sendMessage()">Send Message</button>
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="chat-container">
+      <div class="chat-header">Channel Messages</div>
+      <div id="chat"></div>
+      <div class="message-input">
+        <div class="message-input-wrapper">
+          <input id="message" type="text" placeholder="Type a message... (use @ to ping)" oninput="handleInput()" onkeydown="handleKeyDown(event)" />
+          <div id="suggestions" class="suggestions" style="display:none;"></div>
         </div>
+        <button onclick="sendMessage()">Send Message</button>
       </div>
     </div>
   </div>
@@ -359,7 +259,6 @@ app.get('/', (req, res) => {
         document.getElementById('status').classList.add('connected');
         document.getElementById('disconnectBtn').style.display = 'inline-block';
         loadMessages();
-        loadMembers();
       } else {
         alert(data.error);
       }
@@ -410,56 +309,10 @@ app.get('/', (req, res) => {
       chat.scrollTop = chat.scrollHeight;
     }
 
-    function loadMembers() {
-      const list = document.getElementById('memberList');
-      if (!channelMembers || channelMembers.length === 0) {
-        list.innerHTML = '<div style="padding:16px;color:#949ba4;">No members loaded</div>';
-        return;
-      }
-
-      // Group by status
-      const online = channelMembers.filter(m => m.status !== 'offline');
-      const offline = channelMembers.filter(m => m.status === 'offline');
-
-      let html = '';
-
-      if (online.length > 0) {
-        html += '<div class="sidebar-section">Online — ' + online.length + '</div>';
-        html += '<div class="member-list">';
-        for (const m of online) {
-          html += createMemberHTML(m);
-        }
-        html += '</div>';
-      }
-
-      if (offline.length > 0) {
-        html += '<div class="sidebar-section">Offline — ' + offline.length + '</div>';
-        html += '<div class="member-list">';
-        for (const m of offline) {
-          html += createMemberHTML(m);
-        }
-        html += '</div>';
-      }
-
-      list.innerHTML = html;
-    }
-
-    function createMemberHTML(m) {
-      const statusClass = m.status === 'online' ? 'status-online'
-        : m.status === 'idle' ? 'status-idle'
-        : m.status === 'dnd' ? 'status-dnd'
-        : 'status-offline';
-
-      const botClass = m.bot ? 'bot' : '';
-
-      return \`
-        <div class="member-item">
-          <div class="avatar">
-            <div class="status-indicator \${statusClass}"></div>
-          </div>
-          <div class="member-name \${botClass}">\${escapeHtml(m.username)}</div>
-        </div>
-      \`;
+    function escapeHtml(text) {
+      return String(text).replace(/[&<>"']/g, m => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',\"'\":\"&#39;\"
+      }[m]));
     }
 
     function handleInput() {
@@ -467,6 +320,7 @@ app.get('/', (req, res) => {
       const value = input.value;
       const pos = input.selectionStart;
 
+      // Find last @ before current position
       const lastAtIndex = value.lastIndexOf('@', pos - 1);
       if (lastAtIndex === -1) {
         hideSuggestions();
@@ -482,6 +336,7 @@ app.get('/', (req, res) => {
     }
 
     function handleKeyDown(event) {
+      // Navigate suggestions with ArrowUp / ArrowDown
       if (event.key === 'ArrowDown') {
         if (currentSuggestions.length > 0) {
           userIndex = (userIndex + 1) % currentSuggestions.length;
@@ -497,6 +352,7 @@ app.get('/', (req, res) => {
         return;
       }
 
+      // Select suggestion with Enter
       if (event.key === 'Enter' && currentSuggestions.length > 0) {
         if (userIndex >= 0) {
           const user = currentSuggestions[userIndex];
@@ -506,6 +362,7 @@ app.get('/', (req, res) => {
         return;
       }
 
+      // Hide suggestions on Escape
       if (event.key === 'Escape') {
         hideSuggestions();
         return;
@@ -581,12 +438,6 @@ app.get('/', (req, res) => {
       input.selectionStart = input.selectionEnd = before.length + discordPing.length;
     }
 
-    function escapeHtml(text) {
-      return String(text).replace(/[&<>"']/g, m => ({
-        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',\"'\":\"&#39;\"
-      }[m]));
-    }
-
     setInterval(loadMessages, 2000);
   </script>
 </body>
@@ -615,8 +466,7 @@ app.post('/connect', async (req, res) => {
       intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildPresences
+        GatewayIntentBits.MessageContent
       ],
       partials: [Partials.Channel]
     });
@@ -634,11 +484,6 @@ app.post('/connect', async (req, res) => {
         time: new Date(msg.createdTimestamp).toLocaleString()
       });
       if (messages.length > 100) messages.shift();
-    });
-
-    // Enable presence update
-    client.on('guildMemberUpdate', (oldMember, newMember) => {
-      updateMemberStatus(newMember);
     });
 
     await client.login(DISCORD_TOKEN.trim());
@@ -663,18 +508,13 @@ app.post('/connect', async (req, res) => {
 
     if (messages.length > 100) messages = messages.slice(0, 100);
 
-    // Fetch channel members for @ ping and sidebar
+    // Fetch channel members for @ ping
     try {
       const members = await channel.members.fetch();
-      channelMembers = members.map((m, id) => {
-        const status = m.presence?.status || 'offline';
-        return {
-          id: id,
-          username: m.user.username,
-          bot: m.user.bot,
-          status: status
-        };
-      });
+      channelMembers = members.map((m, id) => ({
+        id: id,
+        username: m.user.username
+      }));
     } catch (err) {
       console.error('Could not fetch members:', err.message);
     }
@@ -684,14 +524,6 @@ app.post('/connect', async (req, res) => {
     res.json({ ok: false, error: err.message });
   }
 });
-
-function updateMemberStatus(newMember) {
-  const idx = channelMembers.findIndex(m => m.id === newMember.id);
-  if (idx !== -1) {
-    const status = newMember.presence?.status || 'offline';
-    channelMembers[idx].status = status;
-  }
-}
 
 app.post('/disconnect', async (req, res) => {
   try {
