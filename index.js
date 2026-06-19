@@ -185,11 +185,11 @@ app.get('/', (req, res) => {
 
     .gif-btn {
       padding: 10px 14px;
-      background: #faa61a;
+      background: #313338;
       min-width: 80px;
     }
     .gif-btn:hover {
-      background: #e59416;
+      background: #313338;
     }
 
     .status {
