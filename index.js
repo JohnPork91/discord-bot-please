@@ -195,7 +195,6 @@ app.get('/', (req, res) => {
       max-height: 200px;
       overflow-y: auto;
       z-index: 1000;
-      margin-top: -2px;
     }
     .suggestion-item {
       padding: 8px 12px;
@@ -233,7 +232,7 @@ app.get('/', (req, res) => {
       <div id="chat"></div>
       <div class="message-input">
         <div class="message-input-wrapper">
-          <input id="message" type="text" placeholder="Type a message... (use @ to ping)" onkeydown="handleKeyDown(event)" />
+          <input id="message" type="text" placeholder="Type a message... (use @ to ping)" oninput="handleInput()" onkeydown="handleKeyDown(event)" />
           <div id="suggestions" class="suggestions" style="display:none;"></div>
         </div>
         <button onclick="sendMessage()">Send Message</button>
@@ -316,26 +315,40 @@ app.get('/', (req, res) => {
       }[m]));
     }
 
-    function handleKeyDown(event) {
-      const input = event.target;
+    function handleInput() {
+      const input = document.getElementById('message');
       const value = input.value;
       const pos = input.selectionStart;
 
-      // Show suggestions when @ is typed
-      if (event.key === '@') {
-        showSuggestions();
+      // Find last @ before current position
+      const lastAtIndex = value.lastIndexOf('@', pos - 1);
+      if (lastAtIndex === -1) {
+        hideSuggestions();
         return;
       }
 
+      const afterAt = value.slice(lastAtIndex + 1, pos);
+      if (afterAt.length === 0) {
+        showAllSuggestions();
+      } else {
+        filterSuggestions(afterAt);
+      }
+    }
+
+    function handleKeyDown(event) {
       // Navigate suggestions with ArrowUp / ArrowDown
       if (event.key === 'ArrowDown') {
-        userIndex = (userIndex + 1) % currentSuggestions.length;
-        highlightSuggestion(userIndex);
+        if (currentSuggestions.length > 0) {
+          userIndex = (userIndex + 1) % currentSuggestions.length;
+          highlightSuggestion(userIndex);
+        }
         return;
       }
       if (event.key === 'ArrowUp') {
-        userIndex = (userIndex - 1 + currentSuggestions.length) % currentSuggestions.length;
-        highlightSuggestion(userIndex);
+        if (currentSuggestions.length > 0) {
+          userIndex = (userIndex - 1 + currentSuggestions.length) % currentSuggestions.length;
+          highlightSuggestion(userIndex);
+        }
         return;
       }
 
@@ -343,7 +356,7 @@ app.get('/', (req, res) => {
       if (event.key === 'Enter' && currentSuggestions.length > 0) {
         if (userIndex >= 0) {
           const user = currentSuggestions[userIndex];
-          insertPing(input, user);
+          insertPing(document.getElementById('message'), user);
         }
         hideSuggestions();
         return;
@@ -354,31 +367,6 @@ app.get('/', (req, res) => {
         hideSuggestions();
         return;
       }
-
-      // Update suggestions as user types after @
-      const lastAtIndex = value.lastIndexOf('@', pos - 1);
-      if (lastAtIndex !== -1 && lastAtIndex < pos) {
-        const afterAt = value.slice(lastAtIndex + 1, pos);
-        if (afterAt.length > 0) {
-          filterSuggestions(afterAt);
-        } else {
-          showAllSuggestions();
-        }
-      } else {
-        hideSuggestions();
-      }
-    }
-
-    function showSuggestions() {
-      const input = document.getElementById('message');
-      const value = input.value;
-      const pos = input.selectionStart;
-
-      const lastAtIndex = value.lastIndexOf('@', pos - 1);
-      if (lastAtIndex === -1) return;
-
-      const afterAt = value.slice(lastAtIndex + 1, pos);
-      filterSuggestions(afterAt);
     }
 
     function showAllSuggestions() {
