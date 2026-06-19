@@ -330,7 +330,8 @@ app.post('/connect', async (req, res) => {
     const channel = await client.channels.fetch(finalChannelId);
     if (channel && channel.isTextBased()) {
       const fetched = await channel.messages.fetch({ limit: 100 });
-      const fetchedArray = fetched.toArray();
+      const fetchedArray = Array.from(fetched.values()); // Convert Collection to array
+
       fetchedArray.sort((a, b) => b.createdTimestamp - a.createdTimestamp);
 
       for (const msg of fetchedArray) {
