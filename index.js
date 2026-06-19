@@ -123,6 +123,8 @@ app.get('/', (req, res) => {
       overflow-y: auto;
       padding: 16px;
       background: #313338;
+      display: flex;
+      flex-direction: column;
     }
 
     .msg {
@@ -193,7 +195,7 @@ app.get('/', (req, res) => {
       <input id="channelId" type="text" value="1393951841238388816" placeholder="Channel ID" />
 
       <div class="row">
-        <button onclick="connectBot()">Connect Bot & Load Last 100 Messages</button>
+        <button onclick="connectBot()">Nigga Bot Starten</button>
         <button onclick="disconnectBot()" id="disconnectBtn" style="display:none; background: #4e5058;">Disconnect Bot</button>
       </div>
 
@@ -269,6 +271,7 @@ app.get('/', (req, res) => {
           <div class="meta">\${escapeHtml(m.time)}</div>
         </div>
       \`).join('');
+      // Scroll to bottom so newest messages are visible
       chat.scrollTop = chat.scrollHeight;
     }
 
@@ -330,9 +333,10 @@ app.post('/connect', async (req, res) => {
     const channel = await client.channels.fetch(finalChannelId);
     if (channel && channel.isTextBased()) {
       const fetched = await channel.messages.fetch({ limit: 100 });
-      const fetchedArray = Array.from(fetched.values()); // Convert Collection to array
+      const fetchedArray = Array.from(fetched.values());
 
-      fetchedArray.sort((a, b) => b.createdTimestamp - a.createdTimestamp);
+      // Sort oldest first (like Discord)
+      fetchedArray.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
       for (const msg of fetchedArray) {
         messages.push({
