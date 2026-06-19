@@ -16,7 +16,7 @@ let client = null;
 let connected = false;
 let currentChannelId = DEFAULT_CHANNEL_ID;
 let messages = [];
-let channelMembers = []; // { id, username }
+let channelMembers = [];
 
 app.get('/', (req, res) => {
   res.send(`
@@ -24,11 +24,12 @@ app.get('/', (req, res) => {
 <html>
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
   <title>Discord Chat Bot</title>
   <style>
     * {
       box-sizing: border-box;
+      touch-action: manipulation;
     }
     body {
       font-family: "Whitney", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -37,24 +38,114 @@ app.get('/', (req, res) => {
       margin: 0;
       padding: 0;
       min-height: 100vh;
+      display: flex;
+      overflow-x: hidden;
     }
-    .container {
-      max-width: 900px;
+    .main-container {
+      display: flex;
+      width: 100%;
+      max-width: 1400px;
       margin: 0 auto;
-      padding: 20px;
     }
-    h2 {
-      margin: 0 0 20px;
-      font-size: 24px;
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: #2b2d31;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #1e1f22;
+    }
+
+    .sidebar-header {
+      padding: 16px;
       font-weight: 600;
+      font-size: 16px;
       color: #f2f3f5;
+      border-bottom: 1px solid #1e1f22;
+    }
+
+    .sidebar-section {
+      padding: 12px 16px 4px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #949ba4;
+      text-transform: uppercase;
+    }
+
+    .member-list {
+      overflow-y: auto;
+      padding: 4px 0;
+    }
+
+    .member-item {
+      display: flex;
+      align-items: center;
+      padding: 6px 16px;
+      cursor: pointer;
+    }
+    .member-item:hover {
+      background: #35373c;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #5865f2;
+      margin-right: 10px;
+      position: relative;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+    }
+
+    .status-indicator {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 3px solid #2b2d31;
+    }
+
+    .status-online {
+      background: #3ba55c;
+    }
+    .status-idle {
+      background: #faa61a;
+    }
+    .status-dnd {
+      background: #f23f43;
+    }
+    .status-offline {
+      background: #747f8d;
+    }
+
+    .member-name {
+      font-size: 14px;
+      color: #dbdee1;
+    }
+    .member-name.bot {
+      color: #7289da;
+    }
+
+    /* Chat area */
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
 
     .input-group {
       background: #2b2d31;
       padding: 16px;
       border-radius: 8px;
-      margin-bottom: 20px;
+      margin: 20px;
     }
 
     label {
@@ -109,6 +200,10 @@ app.get('/', (req, res) => {
       background: #2b2d31;
       border-radius: 8px;
       overflow: hidden;
+      margin: 0 20px 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
 
     .chat-header {
@@ -117,6 +212,18 @@ app.get('/', (req, res) => {
       border-bottom: 1px solid #2b2d31;
       font-weight: 600;
       color: #f2f3f5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .gif-btn {
+      padding: 8px 12px;
+      background: #faa61a;
+      font-size: 12px;
+    }
+    .gif-btn:hover {
+      background: #e59416;
     }
 
     #chat {
@@ -146,6 +253,12 @@ app.get('/', (req, res) => {
       font-size: 14px;
       line-height: 1.4;
       word-break: break-word;
+    }
+
+    .msg .gif-preview {
+      margin-top: 8px;
+      max-width: 300px;
+      border-radius: 8px;
     }
 
     .msg .meta {
@@ -209,40 +322,176 @@ app.get('/', (req, res) => {
     .message-input-wrapper {
       position: relative;
     }
+
+    /* GIF Modal */
+    .gif-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 2000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    .gif-modal.active {
+      display: flex;
+    }
+    .gif-content {
+      background: #2b2d31;
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .gif-header {
+      padding: 16px;
+      background: #313338;
+      border-bottom: 1px solid #2b2d31;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .gif-header h3 {
+      margin: 0;
+      font-size: 18px;
+      color: #f2f3f5;
+    }
+    .close-gif {
+      padding: 8px 12px;
+      background: #747f8d;
+      font-size: 12px;
+    }
+    .close-gif:hover {
+      background: #5e6674;
+    }
+    .gif-search {
+      padding: 12px 16px;
+      background: #2b2d31;
+      border-bottom: 1px solid #1e1f22;
+    }
+    .gif-search input {
+      width: 100%;
+      padding: 12px;
+      background: #1e1f22;
+      border: 1px solid #2b2d31;
+      border-radius: 8px;
+      color: #dbdee1;
+      font-size: 14px;
+    }
+    .gif-search input:focus {
+      outline: none;
+      border-color: #7289da;
+    }
+    .gif-grid {
+      padding: 16px;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .gif-item {
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      background: #1e1f22;
+    }
+    .gif-item:hover {
+      transform: scale(1.02);
+    }
+    .gif-item img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      display: block;
+    }
+    .gif-item .gif-title {
+      padding: 8px;
+      font-size: 12px;
+      color: #dbdee1;
+      word-break: break-word;
+    }
+    .gif-section {
+      padding: 12px 16px 4px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #949ba4;
+      text-transform: uppercase;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Discord Chat Bot</h2>
-
-    <div class="input-group">
-      <label>Channel ID</label>
-      <input id="channelId" type="text" value="1393951841238388816" placeholder="Channel ID" />
-
-      <div class="row">
-        <button onclick="connectBot()">Connect Bot</button>
-        <button onclick="disconnectBot()" id="disconnectBtn" style="display:none; background: #4e5058;">Disconnect Bot</button>
-      </div>
-
-      <div class="status" id="status"></div>
+  <div class="main-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">Members</div>
+      <div id="memberList"></div>
     </div>
 
-    <div class="chat-container">
-      <div class="chat-header">Channel Messages</div>
-      <div id="chat"></div>
-      <div class="message-input">
-        <div class="message-input-wrapper">
-          <input id="message" type="text" placeholder="Type a message... (use @ to ping)" oninput="handleInput()" onkeydown="handleKeyDown(event)" />
-          <div id="suggestions" class="suggestions" style="display:none;"></div>
+    <!-- Chat area -->
+    <div class="chat-area">
+      <div class="input-group">
+        <label>Channel ID</label>
+        <input id="channelId" type="text" value="1393951841238388816" placeholder="Channel ID" />
+
+        <div class="row">
+          <button onclick="connectBot()">Connect Bot & Load Members</button>
+          <button onclick="disconnectBot()" id="disconnectBtn" style="display:none; background: #4e5058;">Disconnect Bot</button>
         </div>
-        <button onclick="sendMessage()">Send Message</button>
+
+        <div class="status" id="status"></div>
       </div>
+
+      <div class="chat-container">
+        <div class="chat-header">
+          <span>Channel Messages</span>
+          <button class="gif-btn" onclick="openGifModal()">🎬 GIF</button>
+        </div>
+        <div id="chat"></div>
+        <div class="message-input">
+          <div class="message-input-wrapper">
+            <input id="message" type="text" placeholder="Type a message... (use @ to ping)" oninput="handleInput()" onkeydown="handleKeyDown(event)" />
+            <div id="suggestions" class="suggestions" style="display:none;"></div>
+          </div>
+          <button onclick="sendMessage()">Send Message</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GIF Modal -->
+  <div id="gifModal" class="gif-modal">
+    <div class="gif-content">
+      <div class="gif-header">
+        <h3>Search GIFs</h3>
+        <button class="close-gif" onclick="closeGifModal()">Close</button>
+      </div>
+      <div class="gif-search">
+        <input id="gifSearch" type="text" placeholder="Search GIFs..." oninput="searchGifs()" />
+      </div>
+      <div id="gifGrid" class="gif-grid"></div>
     </div>
   </div>
 
   <script>
     let userIndex = -1;
     let currentSuggestions = [];
+    let currentGifs = [];
+
+    // Featured GIFs (you can replace with real GIF URLs)
+    const featuredGifs = [
+      { url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3R6bW55Z3R5cDZxejJxejJxejJxejJxejJxejJxejJxejJx/cmpvPsBtK5JHvAZCco/giphy.gif', title: 'Hello' },
+      { url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3R6bW55Z3R5cDZxejJxejJxejJxejJxejJxejJxejJxejJxejJx/3o7aD2saalBwwftBIY/giphy.gif', title: 'Laugh' },
+      { url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3R6bW55Z3R5cDZxejJxejJxejJxejJxejJxejJxejJxejJxejJx/l0HlHFRbmaZtBRhXG/giphy.gif', title: 'Cool' },
+      { url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3R6bW55Z3R5cDZxejJxejJxejJxejJxejJxejJxejJxejJxejJxejJx/xT0xeJpGU534Imz28w/giphy.gif', title: 'Happy' },
+      { url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3R6bW55Z3R5cDZxejJxejJxejJxejJxejJxejJxejJxejJxejJxejJx/26BRv0ThflsHCqDrG/giphy.gif', title: 'Funny' },
+      { url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3R6bW55Z3R5cDZxejJxejJxejJxejJxejJxejJxejJxejJxejJxejJx/3o6Zt6ML6BklcajjsA/giphy.gif', title: 'Love' }
+    ];
 
     async function connectBot() {
       const channelId = document.getElementById('channelId').value;
@@ -259,6 +508,8 @@ app.get('/', (req, res) => {
         document.getElementById('status').classList.add('connected');
         document.getElementById('disconnectBtn').style.display = 'inline-block';
         loadMessages();
+        loadMembers();
+        loadFeaturedGifs();
       } else {
         alert(data.error);
       }
@@ -299,28 +550,147 @@ app.get('/', (req, res) => {
       const res = await fetch('/messages');
       const data = await res.json();
       const chat = document.getElementById('chat');
-      chat.innerHTML = data.messages.map(m => \`
-        <div class="msg">
-          <div class="name">\${escapeHtml(m.author)}</div>
-          <div class="message-content">\${escapeHtml(m.content)}</div>
-          <div class="meta">\${escapeHtml(m.time)}</div>
-        </div>
-      \`).join('');
+      chat.innerHTML = data.messages.map(m => {
+        let contentHTML = escapeHtml(m.content);
+        let gifHTML = '';
+
+        // Check if message contains GIF URL
+        const gifMatch = m.content.match(/(https?:\/\/[^"\\s]+\.(gif|gifv))/);
+        if (gifMatch) {
+          gifHTML = \`<img class="gif-preview" src="\${gifMatch[0]}" alt="GIF">\\n\`;
+        }
+
+        return \`
+          <div class="msg">
+            <div class="name">\${escapeHtml(m.author)}</div>
+            <div class="message-content">\${contentHTML}</div>
+            \${gifHTML}
+            <div class="meta">\${escapeHtml(m.time)}</div>
+          </div>
+        \`;
+      }).join('');
       chat.scrollTop = chat.scrollHeight;
     }
 
-    function escapeHtml(text) {
-      return String(text).replace(/[&<>"']/g, m => ({
-        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',\"'\":\"&#39;\"
-      }[m]));
+    function loadMembers() {
+      const list = document.getElementById('memberList');
+      if (!channelMembers || channelMembers.length === 0) {
+        list.innerHTML = '<div style="padding:16px;color:#949ba4;">No members loaded</div>';
+        return;
+      }
+
+      const online = channelMembers.filter(m => m.status !== 'offline');
+      const offline = channelMembers.filter(m => m.status === 'offline');
+
+      let html = '';
+
+      if (online.length > 0) {
+        html += '<div class="sidebar-section">Online — ' + online.length + '</div>';
+        html += '<div class="member-list">';
+        for (const m of online) {
+          html += createMemberHTML(m);
+        }
+        html += '</div>';
+      }
+
+      if (offline.length > 0) {
+        html += '<div class="sidebar-section">Offline — ' + offline.length + '</div>';
+        html += '<div class="member-list">';
+        for (const m of offline) {
+          html += createMemberHTML(m);
+        }
+        html += '</div>';
+      }
+
+      list.innerHTML = html;
     }
 
+    function createMemberHTML(m) {
+      const statusClass = m.status === 'online' ? 'status-online'
+        : m.status === 'idle' ? 'status-idle'
+        : m.status === 'dnd' ? 'status-dnd'
+        : 'status-offline';
+
+      const botClass = m.bot ? 'bot' : '';
+
+      return \`
+        <div class="member-item">
+          <div class="avatar">
+            <div class="status-indicator \${statusClass}"></div>
+          </div>
+          <div class="member-name \${botClass}">\${escapeHtml(m.username)}</div>
+        </div>
+      \`;
+    }
+
+    // GIF Modal functions
+    function openGifModal() {
+      document.getElementById('gifModal').classList.add('active');
+      loadFeaturedGifs();
+    }
+
+    function closeGifModal() {
+      document.getElementById('gifModal').classList.remove('active');
+      document.getElementById('gifSearch').value = '';
+      currentGifs = [];
+    }
+
+    function loadFeaturedGifs() {
+      currentGifs = featuredGifs;
+      renderGifs();
+    }
+
+    async function searchGifs() {
+      const query = document.getElementById('gifSearch').value.trim();
+      if (!query) {
+        loadFeaturedGifs();
+        return;
+      }
+
+      // Use Giphy API (you can replace with Tenor API)
+      try {
+        const res = await fetch(\`https://api.giphy.com/v1/gifs/search?api_key=dj0bYqJF8V5E8QqhJqFCW8Z5DXhF1qGq&query=\${encodeURIComponent(query)}&limit=12&rating=g\`);
+        const data = await res.json();
+        currentGifs = data.data.map(g => ({
+          url: g.images.fixed_height.url,
+          title: g.title
+        }));
+        renderGifs();
+      } catch (err) {
+        console.error('GIF search error:', err);
+        // Fallback to featured gifs
+        loadFeaturedGifs();
+      }
+    }
+
+    function renderGifs() {
+      const grid = document.getElementById('gifGrid');
+      if (currentGifs.length === 0) {
+        grid.innerHTML = '<div style="padding:16px;color:#949ba4;">No GIFs found</div>';
+        return;
+      }
+
+      grid.innerHTML = currentGifs.map(g => \`
+        <div class="gif-item" onclick="selectGif('\${g.url}', '\${escapeHtml(g.title)}')">
+          <img src="\${g.url}" alt="\${escapeHtml(g.title)}">
+          <div class="gif-title">\${escapeHtml(g.title)}</div>
+        </div>
+      \`).join('');
+    }
+
+    function selectGif(url, title) {
+      const input = document.getElementById('message');
+      const message = title ? \`\${title} \${url}\` : url;
+      input.value = message;
+      closeGifModal();
+    }
+
+    // @ ping functions
     function handleInput() {
       const input = document.getElementById('message');
       const value = input.value;
       const pos = input.selectionStart;
 
-      // Find last @ before current position
       const lastAtIndex = value.lastIndexOf('@', pos - 1);
       if (lastAtIndex === -1) {
         hideSuggestions();
@@ -336,7 +706,6 @@ app.get('/', (req, res) => {
     }
 
     function handleKeyDown(event) {
-      // Navigate suggestions with ArrowUp / ArrowDown
       if (event.key === 'ArrowDown') {
         if (currentSuggestions.length > 0) {
           userIndex = (userIndex + 1) % currentSuggestions.length;
@@ -352,7 +721,6 @@ app.get('/', (req, res) => {
         return;
       }
 
-      // Select suggestion with Enter
       if (event.key === 'Enter' && currentSuggestions.length > 0) {
         if (userIndex >= 0) {
           const user = currentSuggestions[userIndex];
@@ -362,7 +730,6 @@ app.get('/', (req, res) => {
         return;
       }
 
-      // Hide suggestions on Escape
       if (event.key === 'Escape') {
         hideSuggestions();
         return;
@@ -438,6 +805,12 @@ app.get('/', (req, res) => {
       input.selectionStart = input.selectionEnd = before.length + discordPing.length;
     }
 
+    function escapeHtml(text) {
+      return String(text).replace(/[&<>"']/g, m => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',\"'\":\"&#39;\"
+      }[m]));
+    }
+
     setInterval(loadMessages, 2000);
   </script>
 </body>
@@ -508,13 +881,18 @@ app.post('/connect', async (req, res) => {
 
     if (messages.length > 100) messages = messages.slice(0, 100);
 
-    // Fetch channel members for @ ping
+    // Fetch channel members
     try {
       const members = await channel.members.fetch();
-      channelMembers = members.map((m, id) => ({
-        id: id,
-        username: m.user.username
-      }));
+      channelMembers = members.map((m, id) => {
+        const status = m.presence?.status || 'offline';
+        return {
+          id: id,
+          username: m.user.username,
+          bot: m.user.bot,
+          status: status
+        };
+      });
     } catch (err) {
       console.error('Could not fetch members:', err.message);
     }
