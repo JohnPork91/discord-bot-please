@@ -97,12 +97,6 @@ app.get('/', (req, res) => {
       position: relative;
     }
 
-    .avatar img {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-    }
-
     .status-indicator {
       position: absolute;
       bottom: -2px;
@@ -212,18 +206,6 @@ app.get('/', (req, res) => {
       border-bottom: 1px solid #2b2d31;
       font-weight: 600;
       color: #f2f3f5;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .gif-btn {
-      padding: 8px 12px;
-      background: #faa61a;
-      font-size: 12px;
-    }
-    .gif-btn:hover {
-      background: #e59416;
     }
 
     #chat {
@@ -267,14 +249,17 @@ app.get('/', (req, res) => {
       margin-top: 4px;
     }
 
+    /* Message input (smaller like Discord) */
     .message-input {
-      padding: 16px;
+      padding: 12px;
       background: #2b2d31;
+      display: flex;
+      gap: 8px;
     }
 
     .message-input input {
-      width: 100%;
-      padding: 12px 16px;
+      flex: 1;
+      padding: 10px 12px;
       background: #1e1f22;
       border: none;
       border-radius: 8px;
@@ -286,8 +271,18 @@ app.get('/', (req, res) => {
     }
 
     .message-input button {
-      margin-top: 8px;
-      width: 100%;
+      padding: 10px 14px;
+      margin: 0;
+      min-width: 80px;
+    }
+
+    .gif-btn {
+      padding: 10px 14px;
+      background: #faa61a;
+      min-width: 80px;
+    }
+    .gif-btn:hover {
+      background: #e59416;
     }
 
     .status {
@@ -416,13 +411,6 @@ app.get('/', (req, res) => {
       color: #dbdee1;
       word-break: break-word;
     }
-    .gif-section {
-      padding: 12px 16px 4px;
-      font-size: 12px;
-      font-weight: 600;
-      color: #949ba4;
-      text-transform: uppercase;
-    }
   </style>
 </head>
 <body>
@@ -440,7 +428,7 @@ app.get('/', (req, res) => {
         <input id="channelId" type="text" value="1393951841238388816" placeholder="Channel ID" />
 
         <div class="row">
-          <button onclick="connectBot()">Connect Bot & Load Members</button>
+          <button onclick="connectBot()">Connect Bot</button>
           <button onclick="disconnectBot()" id="disconnectBtn" style="display:none; background: #4e5058;">Disconnect Bot</button>
         </div>
 
@@ -448,17 +436,15 @@ app.get('/', (req, res) => {
       </div>
 
       <div class="chat-container">
-        <div class="chat-header">
-          <span>Channel Messages</span>
-          <button class="gif-btn" onclick="openGifModal()">🎬 GIF</button>
-        </div>
+        <div class="chat-header">Channel Messages</div>
         <div id="chat"></div>
         <div class="message-input">
+          <button class="gif-btn" onclick="openGifModal()">🎬 GIF</button>
           <div class="message-input-wrapper">
-            <input id="message" type="text" placeholder="Type a message... (use @ to ping)" oninput="handleInput()" onkeydown="handleKeyDown(event)" />
+            <input id="message" type="text" placeholder="Message @channel" oninput="handleInput()" onkeydown="handleKeyDown(event)" />
             <div id="suggestions" class="suggestions" style="display:none;"></div>
           </div>
-          <button onclick="sendMessage()">Send Message</button>
+          <button onclick="sendMessage()">Send</button>
         </div>
       </div>
     </div>
@@ -483,7 +469,6 @@ app.get('/', (req, res) => {
     let currentSuggestions = [];
     let currentGifs = [];
 
-    // Featured GIFs (you can replace with real GIF URLs)
     const featuredGifs = [
       { url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3R6bW55Z3R5cDZxejJxejJxejJxejJxejJxejJxejJxejJx/cmpvPsBtK5JHvAZCco/giphy.gif', title: 'Hello' },
       { url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3R6bW55Z3R5cDZxejJxejJxejJxejJxejJxejJxejJxejJxejJx/3o7aD2saalBwwftBIY/giphy.gif', title: 'Laugh' },
@@ -554,7 +539,6 @@ app.get('/', (req, res) => {
         let contentHTML = escapeHtml(m.content);
         let gifHTML = '';
 
-        // Check if message contains GIF URL
         const gifMatch = m.content.match(/(https?:\/\/[^"\\s]+\.(gif|gifv))/);
         if (gifMatch) {
           gifHTML = \`<img class="gif-preview" src="\${gifMatch[0]}" alt="GIF">\\n\`;
@@ -623,7 +607,6 @@ app.get('/', (req, res) => {
       \`;
     }
 
-    // GIF Modal functions
     function openGifModal() {
       document.getElementById('gifModal').classList.add('active');
       loadFeaturedGifs();
@@ -647,7 +630,6 @@ app.get('/', (req, res) => {
         return;
       }
 
-      // Use Giphy API (you can replace with Tenor API)
       try {
         const res = await fetch(\`https://api.giphy.com/v1/gifs/search?api_key=dj0bYqJF8V5E8QqhJqFCW8Z5DXhF1qGq&query=\${encodeURIComponent(query)}&limit=12&rating=g\`);
         const data = await res.json();
@@ -658,7 +640,6 @@ app.get('/', (req, res) => {
         renderGifs();
       } catch (err) {
         console.error('GIF search error:', err);
-        // Fallback to featured gifs
         loadFeaturedGifs();
       }
     }
@@ -685,7 +666,6 @@ app.get('/', (req, res) => {
       closeGifModal();
     }
 
-    // @ ping functions
     function handleInput() {
       const input = document.getElementById('message');
       const value = input.value;
@@ -866,7 +846,6 @@ app.post('/connect', async (req, res) => {
       return res.json({ ok: false, error: 'Channel not found or not text-based.' });
     }
 
-    // Fetch last 100 messages
     const fetched = await channel.messages.fetch({ limit: 100 });
     const fetchedArray = Array.from(fetched.values());
     fetchedArray.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
@@ -881,7 +860,6 @@ app.post('/connect', async (req, res) => {
 
     if (messages.length > 100) messages = messages.slice(0, 100);
 
-    // Fetch channel members
     try {
       const members = await channel.members.fetch();
       channelMembers = members.map((m, id) => {
