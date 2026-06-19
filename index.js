@@ -26,32 +26,189 @@ app.get('/', (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Discord Chat Bot</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; padding: 0 12px; }
-    input, button { width: 100%; padding: 10px; margin: 6px 0 12px; box-sizing: border-box; }
-    #chat { height: 420px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background: #fafafa; }
-    .msg { margin-bottom: 10px; }
-    .name { font-weight: bold; }
-    .meta { font-size: 12px; color: #666; }
-    .row { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: "Whitney", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background: #313338;
+      color: #dbdee1;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h2 {
+      margin: 0 0 20px;
+      font-size: 24px;
+      font-weight: 600;
+      color: #f2f3f5;
+    }
+
+    .input-group {
+      background: #2b2d31;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #b5b6b8;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      background: #1e1f22;
+      border: 1px solid #2b2d31;
+      border-radius: 4px;
+      color: #dbdee1;
+      font-size: 14px;
+    }
+    input:focus {
+      outline: none;
+      border-color: #7289da;
+    }
+
+    button {
+      padding: 12px 16px;
+      background: #7289da;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #5b6eae;
+    }
+    button:disabled {
+      background: #4e5058;
+      cursor: not-allowed;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .chat-container {
+      background: #2b2d31;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      padding: 12px 16px;
+      background: #313338;
+      border-bottom: 1px solid #2b2d31;
+      font-weight: 600;
+      color: #f2f3f5;
+    }
+
+    #chat {
+      height: 420px;
+      overflow-y: auto;
+      padding: 16px;
+      background: #313338;
+    }
+
+    .msg {
+      margin-bottom: 16px;
+      padding: 8px 12px;
+      background: #2b2d31;
+      border-radius: 8px;
+    }
+
+    .msg .name {
+      font-weight: 600;
+      color: #f2f3f5;
+      margin-bottom: 4px;
+    }
+
+    .msg .message-content {
+      color: #dbdee1;
+      font-size: 14px;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .msg .meta {
+      font-size: 11px;
+      color: #949ba4;
+      margin-top: 4px;
+    }
+
+    .message-input {
+      padding: 16px;
+      background: #2b2d31;
+    }
+
+    .message-input input {
+      width: 100%;
+      padding: 12px 16px;
+      background: #1e1f22;
+      border: none;
+      border-radius: 8px;
+      color: #dbdee1;
+      font-size: 14px;
+    }
+    .message-input input:focus {
+      outline: none;
+    }
+
+    .message-input button {
+      margin-top: 8px;
+      width: 100%;
+    }
+
+    .status {
+      font-size: 12px;
+      color: #949ba4;
+      margin-top: 6px;
+    }
+    .status.connected {
+      color: #3ba55c;
+    }
   </style>
 </head>
 <body>
-  <h2>Discord Chat Bot</h2>
+  <div class="container">
+    <h2>Discord Chat Bot</h2>
 
-  <label>Channel ID</label>
-  <input id="channelId" type="text" value="1393951841238388816" placeholder="Channel ID" />
+    <div class="input-group">
+      <label>Channel ID</label>
+      <input id="channelId" type="text" value="1393951841238388816" placeholder="Channel ID" />
 
-  <div class="row">
-    <button onclick="connectBot()">Connect Bot</button>
-    <button onclick="disconnectBot()" id="disconnectBtn" style="display:none;">Disconnect Bot</button>
+      <div class="row">
+        <button onclick="connectBot()">Connect Bot & Load Last 100 Messages</button>
+        <button onclick="disconnectBot()" id="disconnectBtn" style="display:none; background: #4e5058;">Disconnect Bot</button>
+      </div>
+
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="chat-container">
+      <div class="chat-header">Channel Messages</div>
+      <div id="chat"></div>
+      <div class="message-input">
+        <input id="message" type="text" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendMessage()" />
+        <button onclick="sendMessage()">Send Message</button>
+      </div>
+    </div>
   </div>
-
-  <label>Message</label>
-  <input id="message" type="text" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendMessage()" />
-  <button onclick="sendMessage()">Send Message</button>
-
-  <h3>Messages</h3>
-  <div id="chat"></div>
 
   <script>
     async function connectBot() {
@@ -65,8 +222,10 @@ app.get('/', (req, res) => {
       });
       const data = await res.json();
       if (data.ok) {
-        alert('Connected');
+        document.getElementById('status').textContent = 'Connected';
+        document.getElementById('status').classList.add('connected');
         document.getElementById('disconnectBtn').style.display = 'inline-block';
+        loadMessages();
       } else {
         alert(data.error);
       }
@@ -78,8 +237,13 @@ app.get('/', (req, res) => {
         headers: { 'Content-Type': 'application/json' }
       });
       const data = await res.json();
-      alert(data.ok ? 'Disconnected' : data.error);
-      document.getElementById('disconnectBtn').style.display = 'none';
+      if (data.ok) {
+        document.getElementById('status').textContent = 'Disconnected';
+        document.getElementById('status').classList.remove('connected');
+        document.getElementById('disconnectBtn').style.display = 'none';
+      } else {
+        alert(data.error);
+      }
     }
 
     async function sendMessage() {
@@ -101,7 +265,7 @@ app.get('/', (req, res) => {
       chat.innerHTML = data.messages.map(m => \`
         <div class="msg">
           <div class="name">\${escapeHtml(m.author)}</div>
-          <div>\${escapeHtml(m.content)}</div>
+          <div class="message-content">\${escapeHtml(m.content)}</div>
           <div class="meta">\${escapeHtml(m.time)}</div>
         </div>
       \`).join('');
@@ -115,7 +279,6 @@ app.get('/', (req, res) => {
     }
 
     setInterval(loadMessages, 2000);
-    loadMessages();
   </script>
 </body>
 </html>
@@ -163,6 +326,24 @@ app.post('/connect', async (req, res) => {
     });
 
     await client.login(DISCORD_TOKEN.trim());
+
+    const channel = await client.channels.fetch(finalChannelId);
+    if (channel && channel.isTextBased()) {
+      const fetched = await channel.messages.fetch({ limit: 100 });
+      const fetchedArray = fetched.toArray();
+      fetchedArray.sort((a, b) => b.createdTimestamp - a.createdTimestamp);
+
+      for (const msg of fetchedArray) {
+        messages.push({
+          author: msg.author.bot ? `[Bot] ${msg.author.username}` : msg.author.username,
+          content: msg.content || '[no text]',
+          time: new Date(msg.createdTimestamp).toLocaleString()
+        });
+      }
+
+      if (messages.length > 100) messages = messages.slice(0, 100);
+    }
+
     res.json({ ok: true });
   } catch (err) {
     res.json({ ok: false, error: err.message });
@@ -202,5 +383,5 @@ app.get('/messages', (req, res) => {
   res.json({ messages });
 });
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Listening on ${PORT}`));
