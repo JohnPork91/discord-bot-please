@@ -339,7 +339,7 @@ app.post('/start', async (req, res) => {
         author: msg.author.bot ? `[Bot] ${msg.author.username}` : msg.author.username,
         content: msg.content || '[no text]',
         time: new Date(msg.createdTimestamp).toLocaleString(),
-        messageid: new ID(msg.id).toLocaleString()
+        messageid: msg.id
       });
       if (messages.length > 100) messages.shift();
     });
