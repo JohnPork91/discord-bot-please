@@ -312,8 +312,8 @@ app.post('/start', async (req, res) => {
     client = new Client({
       intents: [
         GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages,
         GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent
       ],
       partials: [Partials.Channel]
