@@ -156,7 +156,7 @@ app.get('/', (req, res) => {
       display: flex;
       gap: 8px;
     }
-    .msg .authorrow {
+    .authorrow {
       display: flex;
       gap: 8px;
       align-items: center;
