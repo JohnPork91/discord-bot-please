@@ -125,10 +125,15 @@ app.get('/', (req, res) => {
       background: #2b2d31;
       border-radius: 8px;
     }
-
     .msg .name {
       font-weight: 600;
       color: #f2f3f5;
+      margin-bottom: 4px;
+    }
+
+    .msg .authorid {
+      font-weight: 600;
+      color: #949ba4;
       margin-bottom: 4px;
     }
 
