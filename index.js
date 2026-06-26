@@ -38,6 +38,7 @@ body {
 .topbar {
   <div class="topbar">
   <div># general</div>
+  <button onclick="toggleMembers()">Members</button>
 
   <div class="controls">
     <button onclick="toggleMembers()">Members</button>
