@@ -277,13 +277,13 @@ app.get('/', (req, res) => {
       
       chat.innerHTML = data.messages.map(m => \`
         <div class="msg">
+          <div class="message-content">\${escapeHtml(m.content)}</div>
+          <div class="meta">\${escapeHtml(m.time)}</div>
+          <div class="msgid">\${escapeHtml(m.messageid)}</div>
           <div class"authorrow">
             <div class="name">\${escapeHtml(m.author)}</div>
             <div class="authorid">\${escapeHtml(m.authorid)}</div>
           <div>
-          <div class="message-content">\${escapeHtml(m.content)}</div>
-          <div class="meta">\${escapeHtml(m.time)}</div>
-          <div class="msgid">\${escapeHtml(m.messageid)}</div>
         </div>
       \`).join('');
       
