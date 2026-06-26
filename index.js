@@ -349,7 +349,7 @@ app.post('/start', async (req, res) => {
         content: msg.content || '[no text]',
         time: new Date(msg.createdTimestamp).toLocaleString(),
         messageid: msg.id,
-        authorid: message.author.id
+        authorid: msg.author.id
       });
       if (messages.length > 100) messages.shift();
     });
@@ -377,7 +377,7 @@ app.post('/start', async (req, res) => {
         content: msg.content || '[no text]',
         time: new Date(msg.createdTimestamp).toLocaleString(),
         messageid: msg.id,
-        authorid: message.author.id
+        authorid: msg.author.id
       });
     }
 
