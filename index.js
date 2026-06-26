@@ -205,6 +205,7 @@ button {
 <div class="topbar">
   <div># general</div>
   <div class="controls">
+    <button onclick="toggleMembers()">Members</button>
     <button onclick="startBot()">Start</button>
     <button onclick="stopBot()">Stop</button>
   </div>
