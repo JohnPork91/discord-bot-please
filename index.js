@@ -144,7 +144,13 @@ app.get('/', (req, res) => {
       color: #949ba4;
       margin-top: 4px;
     }
+    .msg .msgid {
+      font-size: 11px;
+      color: #949ba4;
+      margin-top: 4px;
+    }
 
+    
     .message-input {
       padding: 12px;
       background: #2b2d31;
@@ -269,7 +275,7 @@ app.get('/', (req, res) => {
           <div class="name">\${escapeHtml(m.author)}</div>
           <div class="message-content">\${escapeHtml(m.content)}</div>
           <div class="meta">\${escapeHtml(m.time)}</div>
-          <div class="meta">\${escapeHtml(m.messageid)}</div>
+          <div class="msgid">\${escapeHtml(m.messageid)}</div>
         </div>
       \`).join('');
       
@@ -334,7 +340,7 @@ app.post('/start', async (req, res) => {
         author: msg.author.bot ? `[Bot] ${msg.author.username}` : msg.author.username,
         content: msg.content || '[no text]',
         time: new Date(msg.createdTimestamp).toLocaleString(),
-        messageid: new ID(msg.id).toLocaleString()
+        messageid: msg.id
       });
       if (messages.length > 100) messages.shift();
     });
@@ -360,7 +366,8 @@ app.post('/start', async (req, res) => {
       messages.push({
         author: msg.author.bot ? `[Bot] ${msg.author.username}` : msg.author.username,
         content: msg.content || '[no text]',
-        time: new Date(msg.createdTimestamp).toLocaleString()
+        time: new Date(msg.createdTimestamp).toLocaleString(),
+        messageid: msg.id
       });
     }
 
