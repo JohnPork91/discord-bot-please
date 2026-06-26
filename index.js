@@ -36,15 +36,15 @@ body {
 
 /* TOP BAR */
 .topbar {
-  height: 48px;
-  background: #2b2d31;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  font-weight: bold;
-  color: #f2f3f5;
-  border-bottom: 1px solid #1e1f22;
+  <div class="topbar">
+  <div># general</div>
+
+  <div class="controls">
+    <button onclick="toggleMembers()">Members</button>
+    <button onclick="startBot()">Start</button>
+    <button onclick="stopBot()">Stop</button>
+  </div>
+</div>
 }
 
 /* MAIN LAYOUT */
@@ -170,6 +170,34 @@ body {
 
 button {
   cursor: pointer;
+}
+@media (max-width: 768px) {
+  .layout {
+    flex-direction: column;
+  }
+
+  .members {
+    position: fixed;
+    right: 0;
+    top: 48px;
+    height: calc(100vh - 48px);
+    width: 260px;
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+    z-index: 1000;
+  }
+
+  .members.open {
+    transform: translateX(0);
+  }
+
+  .chat {
+    width: 100%;
+  }
+
+  .topbar {
+    justify-content: space-between;
+  }
 }
 </style>
 </head>
