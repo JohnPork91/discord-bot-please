@@ -283,7 +283,7 @@ app.get('/', (req, res) => {
           <div class"authorrow">
             <div class="name">\${escapeHtml(m.author)}</div>
             <div class="authorid">\${escapeHtml(m.authorid)}</div>
-          <div>
+          </div>
         </div>
       \`).join('');
       
