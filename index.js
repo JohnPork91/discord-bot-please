@@ -125,12 +125,13 @@ app.get('/', (req, res) => {
       background: #2b2d31;
       border-radius: 8px;
     }
+
     .msg .name {
       font-weight: 600;
       color: #f2f3f5;
       margin-bottom: 4px;
     }
-    
+
     .msg .message-content {
       color: #dbdee1;
       font-size: 14px;
@@ -144,18 +145,12 @@ app.get('/', (req, res) => {
       margin-top: 4px;
     }
 
-    .msg .msgid {
-      font-size: 11px;
-      color: #949ba4;
-      margin-top: 4px;
-    }
     .message-input {
       padding: 12px;
       background: #2b2d31;
       display: flex;
       gap: 8px;
     }
-
 
     .message-input input {
       flex: 1;
@@ -271,10 +266,10 @@ app.get('/', (req, res) => {
       
       chat.innerHTML = data.messages.map(m => \`
         <div class="msg">
-          <div class="name">${escapeHtml(m.author || '')}</div>
+          <div class="name">\${escapeHtml(m.author)}</div>
           <div class="message-content">\${escapeHtml(m.content)}</div>
           <div class="meta">\${escapeHtml(m.time)}</div>
-          <div class="msgid">\${escapeHtml(m.messageid)}</div>
+          <div class="meta">\${escapeHtml(m.messageid)}</div>
         </div>
       \`).join('');
       
@@ -339,7 +334,7 @@ app.post('/start', async (req, res) => {
         author: msg.author.bot ? `[Bot] ${msg.author.username}` : msg.author.username,
         content: msg.content || '[no text]',
         time: new Date(msg.createdTimestamp).toLocaleString(),
-        messageid: msg.id,
+        messageid: new ID(msg.id).toLocaleString()
       });
       if (messages.length > 100) messages.shift();
     });
@@ -365,8 +360,7 @@ app.post('/start', async (req, res) => {
       messages.push({
         author: msg.author.bot ? `[Bot] ${msg.author.username}` : msg.author.username,
         content: msg.content || '[no text]',
-        time: new Date(msg.createdTimestamp).toLocaleString(),
-        messageid: msg.id,
+        time: new Date(msg.createdTimestamp).toLocaleString()
       });
     }
 
