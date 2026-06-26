@@ -3,6 +3,9 @@ const { Client, GatewayIntentBits, Partials } = require('discord.js');
 
 const app = express();
 app.use(express.json());
+const path = require('path');
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const DEFAULT_CHANNEL_ID = "1393951841238388816";
