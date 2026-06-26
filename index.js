@@ -145,6 +145,11 @@ app.get('/', (req, res) => {
       margin-top: 4px;
     }
 
+    .msg .msgid {
+      font-size: 11px;
+      color: #949ba4;
+      margin-top: 4px;
+    }
     .message-input {
       padding: 12px;
       background: #2b2d31;
