@@ -274,7 +274,7 @@ app.get('/', (req, res) => {
           <div class="name">\${escapeHtml(m.author)}</div>
           <div class="message-content">\${escapeHtml(m.content)}</div>
           <div class="meta">\${escapeHtml(m.time)}</div>
-          <div class="meta">\${escapeHtml(m.messageid)}</div>
+          <div class="msgid">\${escapeHtml(m.messageid)}</div>
         </div>
       \`).join('');
       
