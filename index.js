@@ -365,7 +365,7 @@ app.post('/start', async (req, res) => {
       messages.push({
         author: msg.author.bot ? `[Bot] ${msg.author.username}` : msg.author.username,
         content: msg.content || '[no text]',
-        time: new Date(msg.createdTimestamp).toLocaleString()
+        time: new Date(msg.createdTimestamp).toLocaleString(),
         messageid: msg.id
       });
     }
