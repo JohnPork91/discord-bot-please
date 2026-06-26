@@ -313,7 +313,7 @@ app.post('/start', async (req, res) => {
       intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
-        GatewayIntendBits.GuildMembers,
+        GatewayIntentBits.GuildMembers,
         GatewayIntentBits.MessageContent
       ],
       partials: [Partials.Channel]
