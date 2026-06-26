@@ -313,6 +313,7 @@ app.post('/start', async (req, res) => {
       intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
+        GatewayIntendBits.GuildMembers,
         GatewayIntentBits.MessageContent
       ],
       partials: [Partials.Channel]
@@ -403,6 +404,43 @@ app.post('/send', async (req, res) => {
 
 app.get('/messages', (req, res) => {
   res.json({ messages });
+});
+app.get('/members', async (req, res) => {
+  try {
+    if (!client || !connected) {
+      return res.json({ ok: false, error: 'Bot is not running.' });
+    }
+
+    const channel = await client.channels.fetch(currentChannelId);
+
+    if (!channel.guild) {
+      return res.json({ ok:false, error:'Channel is not in a guild.' });
+    }
+
+    const guild = channel.guild;
+
+    // Fetch all members
+    await guild.members.fetch();
+
+    const members = guild.members.cache
+      .map(member => ({
+        username: member.user.username,
+        displayName: member.displayName,
+        id: member.user.id,
+        bot: member.user.bot
+      }))
+      .sort((a, b) => a.displayName.localeCompare(b.displayName));
+
+    res.json({
+      ok: true,
+      guild: guild.name,
+      count: members.length,
+      members
+    });
+
+  } catch (err) {
+    res.json({ ok: false, error: err.message });
+  }
 });
 
 
